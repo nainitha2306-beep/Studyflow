@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyFlow — Personal Study Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070D1B;
+  --surface: #0C1525;
+  --elevated: #111E33;
+  --hover: #162440;
+  --border: rgba(255,255,255,0.07);
+  --border-hi: rgba(255,255,255,0.13);
+  --txt: #E8EDFF;
+  --txt2: #7B91BD;
+  --txt3: #3D5070;
+  --accent: #4C84FF;
+  --accent-bg: rgba(76,132,255,0.1);
+  --green: #36D68C;
+  --green-bg: rgba(54,214,140,0.1);
+  --orange: #FFB547;
+  --red: #FF6B8A;
+  --r: 10px;
+  --r2: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;display:flex}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:4px}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:270px;min-width:270px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh}
+.sb-head{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.logo-box{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#4C84FF 0%,#7C5CE7 100%);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.logo-name{font-size:17px;font-weight:800;letter-spacing:-0.3px}
+.logo-tag{font-size:10px;color:var(--txt3);font-weight:500;margin-top:1px}
+.add-btn{width:100%;background:var(--accent-bg);border:1px dashed rgba(76,132,255,0.35);color:var(--accent);padding:9px;border-radius:var(--r);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.18s}
+.add-btn:hover{background:rgba(76,132,255,0.18);border-color:var(--accent)}
+.sb-list{flex:1;overflow-y:auto;padding:10px 0}
+.sb-empty{padding:24px 18px;text-align:center;color:var(--txt3);font-size:12px;line-height:1.7}
+.sub-item{display:flex;align-items:center;gap:9px;padding:9px 18px;cursor:pointer;border-left:2.5px solid transparent;transition:background 0.14s;position:relative}
+.sub-item:hover{background:var(--hover)}
+.sub-item.active{background:var(--hover);border-left-color:var(--accent)}
+.sub-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.sub-info{flex:1;min-width:0}
+.sub-nm{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub-meta{font-size:10.5px;color:var(--txt3);margin-top:2px;display:flex;align-items:center;gap:5px}
+.running-pill{background:var(--green-bg);color:var(--green);font-size:9.5px;padding:1px 6px;border-radius:4px;font-weight:700;display:flex;align-items:center;gap:3px}
+.running-pill::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.4s ease-in-out infinite}
+.sub-actions{display:flex;flex-direction:column;gap:2px;opacity:0;transition:opacity 0.14s}
+.sub-item:hover .sub-actions{opacity:1}
+.ico-btn{background:none;border:none;color:var(--txt3);cursor:pointer;padding:3px 5px;border-radius:5px;font-size:11px;line-height:1;transition:all 0.14s;display:flex;align-items:center;justify-content:center}
+.ico-btn:hover{background:var(--elevated);color:var(--txt)}
+.del-btn{color:var(--red);opacity:0}
+.sub-item:hover .del-btn{opacity:1}
+.del-btn:hover{background:rgba(255,107,138,0.12)}
+.sb-foot{padding:14px 18px;border-top:1px solid var(--border)}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.stat-box{background:var(--elevated);border-radius:var(--r);padding:9px 6px;text-align:center}
+.stat-val{font-size:17px;font-weight:800;line-height:1}
+.stat-lbl{font-size:9.5px;color:var(--txt3);font-weight:600;margin-top:3px}
+
+/* ===== MAIN ===== */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* ===== EMPTY STATE ===== */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--txt3);padding:40px;text-align:center;gap:0}
+.empty-ico{font-size:60px;margin-bottom:16px;opacity:0.45}
+.empty-title{font-size:20px;font-weight:800;color:var(--txt2);margin-bottom:8px}
+.empty-desc{font-size:13px;line-height:1.7;max-width:300px}
+
+/* ===== SUBJECT DETAIL ===== */
+.detail{flex:1;overflow-y:auto;padding:26px 28px 40px}
+.detail-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:6px}
+.sub-icon-lg{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.head-info{flex:1}
+.head-name{font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:3px}
+.head-sub{font-size:12.5px;color:var(--txt2)}
+.head-btns{display:flex;gap:6px;margin-top:4px}
+.head-btn{background:var(--elevated);border:1px solid var(--border);color:var(--txt2);padding:6px 12px;border-radius:7px;cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:600;transition:all 0.15s}
+.head-btn:hover{background:var(--hover);color:var(--txt);border-color:var(--border-hi)}
+.prog-wrap{margin:16px 0 22px}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.prog-label{font-size:11.5px;font-weight:600;color:var(--txt2)}
+.prog-pct{font-size:13px;font-weight:800;color:var(--accent)}
+.prog-track{height:6px;background:var(--elevated);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#4C84FF,#7C5CE7);transition:width 0.5s cubic-bezier(.4,0,.2,1)}
+.grid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+
+/* ===== CARDS ===== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px}
+.card+.card{margin-top:14px}
+.c-title{font-size:10.5px;font-weight:700;color:var(--txt3);letter-spacing:.9px;text-transform:uppercase;margin-bottom:14px}
+
+/* ===== TIMER ===== */
+.timer-face{text-align:center;padding:10px 0 8px}
+.timer-time{font-size:48px;font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums;line-height:1;transition:color 0.3s}
+.timer-time.running{color:var(--green)}
+.timer-status{font-size:11px;color:var(--txt3);margin-top:5px;height:18px;display:flex;align-items:center;justify-content:center;gap:5px}
+.timer-controls{display:flex;gap:8px;margin-top:14px}
+.t-btn{flex:1;padding:11px;border-radius:var(--r);border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:all 0.18s}
+.t-start{background:var(--accent);color:#fff}
+.t-start:hover{background:#3a73ee}
+.t-pause{background:var(--orange);color:#1a0800}
+.t-pause:hover{filter:brightness(0.9)}
+.t-reset{background:var(--elevated);color:var(--txt2);flex:0;padding:11px 14px}
+.t-reset:hover{background:var(--hover);color:var(--txt)}
+.timer-accumulated{margin-top:12px;background:var(--elevated);border-radius:var(--r);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.acc-label{font-size:11px;color:var(--txt3)}
+.acc-val{font-size:12.5px;font-weight:700;color:var(--green)}
+.session-hist{margin-top:10px}
+.sess-title{font-size:10.5px;color:var(--txt3);font-weight:600;margin-bottom:6px}
+.sess-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:11.5px}
+.sess-item:last-child{border:none}
+.sess-n{color:var(--txt2)}
+.sess-t{color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+.sess-empty{color:var(--txt3);font-size:11px;text-align:center;padding:8px 0}
+
+/* ===== TOPICS ===== */
+.add-topic-row{display:flex;gap:8px;margin-bottom:14px}
+.topic-input{flex:1;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px;color:var(--txt);font-family:inherit;font-size:13px;outline:none;transition:border-color 0.18s}
+.topic-input::placeholder{color:var(--txt3)}
+.topic-input:focus{border-color:var(--accent)}
+.topic-add-btn{background:var(--accent);border:none;border-radius:var(--r);color:#fff;padding:10px 14px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:background 0.18s;white-space:nowrap}
+.topic-add-btn:hover{background:#3a73ee}
+.topics-empty{text-align:center;padding:28px 0;color:var(--txt3);font-size:12.5px;line-height:1.7}
+.topics-empty-ico{font-size:28px;margin-bottom:8px;opacity:.4}
+.topic-list{display:flex;flex-direction:column;gap:5px}
+.t-item{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--elevated);border-radius:var(--r);border:1px solid var(--border);transition:all 0.18s;position:relative}
+.t-item:hover{border-color:var(--border-hi)}
+.t-item.done{opacity:.6}
+.t-check{width:19px;height:19px;border-radius:5px;border:2px solid var(--border-hi);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:#fff;font-size:11px}
+.t-check.on{background:var(--green);border-color:var(--green)}
+.t-name{flex:1;font-size:13px;font-weight:500;transition:all 0.2s;word-break:break-word}
+.t-item.done .t-name{text-decoration:line-through;color:var(--txt3)}
+.t-del{background:none;border:none;color:var(--txt3);cursor:pointer;padding:4px;border-radius:5px;opacity:0;transition:all 0.15s;font-size:14px;flex-shrink:0}
+.t-item:hover .t-del{opacity:1}
+.t-del:hover{color:var(--red);background:rgba(255,107,138,0.1)}
+.topics-summary{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.ts-pill{background:var(--elevated);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+.ts-pill.green{background:var(--green-bg);color:var(--green)}
+.ts-pill.blue{background:var(--accent-bg);color:var(--accent)}
+.ts-pill.gray{color:var(--txt2)}
+
+/* ===== MODAL ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .18s ease}
+.modal{background:var(--surface);border:1px solid var(--border-hi);border-radius:var(--r2);padding:26px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:slideUp .2s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.m-title{font-size:17px;font-weight:800;margin-bottom:18px}
+.fg{margin-bottom:14px}
+.fl{font-size:11.5px;font-weight:600;color:var(--txt2);display:block;margin-bottom:7px}
+.fi{width:100%;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px;color:var(--txt);font-family:inherit;font-size:14px;outline:none;transition:border-color 0.18s}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--txt3)}
+.emoji-row{display:flex;gap:6px;flex-wrap:wrap}
+.e-opt{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--elevated);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.e-opt:hover,.e-opt.sel{border-color:var(--accent);background:var(--accent-bg)}
+.clr-row{display:flex;gap:7px;flex-wrap:wrap}
+.clr-sw{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0}
+.clr-sw:hover{transform:scale(1.1)}
+.clr-sw.sel{border-color:#fff;transform:scale(1.15)}
+.m-acts{display:flex;gap:8px;margin-top:22px}
+.m-cancel{flex:1;padding:11px;background:var(--elevated);border:1px solid var(--border);border-radius:var(--r);color:var(--txt2);cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;transition:all .15s}
+.m-cancel:hover{background:var(--hover)}
+.m-save{flex:1;padding:11px;background:var(--accent);border:none;border-radius:var(--r);color:#fff;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;transition:background .15s}
+.m-save:hover{background:#3a73ee}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--elevated);border:1px solid var(--border-hi);border-radius:var(--r);padding:12px 18px;font-size:13px;font-weight:600;color:var(--txt);box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:500;animation:toastIn .25s ease;display:flex;align-items:center;gap:8px}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== ANIMATIONS ===== */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:860px){
+  .grid{grid-template-columns:1fr}
+  .sidebar{width:230px;min-width:230px}
+  .detail{padding:18px 16px 40px}
+}
+@media(max-width:600px){
+  .sidebar{display:none}
+  .detail{padding:16px}
+  .timer-time{font-size:38px}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <div class="logo">
+      <div class="logo-box">📚</div>
+      <div>
+        <div class="logo-name">StudyFlow</div>
+        <div class="logo-tag">Personal Study Planner</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="openModal()">＋ &nbsp;Add Subject</button>
+  </div>
+  <div class="sb-list" id="sb-list">
+    <div class="sb-empty">No subjects yet.<br>Add one to get started!</div>
+  </div>
+  <div class="sb-foot">
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val" id="s-subjects">0</div>
+        <div class="stat-lbl">Subjects</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-topics">0</div>
+        <div class="stat-lbl">Topics</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="s-pct">0%</div>
+        <div class="stat-lbl">Done</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="main-area">
+  <div class="empty" id="empty-state">
+    <div class="empty-ico">🎯</div>
+    <div class="empty-title">Ready to study?</div>
+    <div class="empty-desc">Add your subjects from the sidebar, then track every topic and your study time.</div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="modal-overlay" style="display:none" onclick="closeOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="m-title" id="modal-title">Add Subject</div>
+    <div class="fg">
+      <label class="fl">Subject Name</label>
+      <input class="fi" id="m-name" placeholder="e.g. Data Structures" maxlength="40" onkeydown="if(event.key==='Enter')saveSubject()">
+    </div>
+    <div class="fg">
+      <label class="fl">Icon</label>
+      <div class="emoji-row" id="emoji-row"></div>
+    </div>
+    <div class="fg">
+      <label class="fl">Color Label</label>
+      <div class="clr-row" id="clr-row"></div>
+    </div>
+    <div class="m-acts">
+      <button class="m-cancel" onclick="closeModal()">Cancel</button>
+      <button class="m-save" id="modal-save-btn" onclick="saveSubject()">Add Subject</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== DATA ===== */
+const EMOJIS = ['📚','🔬','🧮','💻','🌍','📐','📝','🧪','🎨','🎵','⚡','🏛️','🧬','📊','🗺️','🔭'];
+const COLORS = ['#4C84FF','#36D68C','#FF6B8A','#FFB547','#A78BFA','#F97316','#22D3EE','#EC4899','#84CC16','#F43F5E'];
+
+let state = {subjects:[], selected:null};
+let timers = {}; // {id: {elapsed:0, running:false, interval:null, sessions:[]}}
+let editingId = null;
+let selectedEmoji = EMOJIS[0];
+let selectedColor = COLORS[0];
+
+/* ===== STORAGE ===== */
+function save(){
+  // Save state (but not live interval refs)
+  const toStore = {subjects:state.subjects, selected:state.selected};
+  const timerStore = {};
+  for(const [id,t] of Object.entries(timers)){
+    timerStore[id] = {elapsed:currentElapsed(id), sessions:t.sessions};
+  }
+  localStorage.setItem('sf_state', JSON.stringify(toStore));
+  localStorage.setItem('sf_timers', JSON.stringify(timerStore));
+}
+
+function load(){
+  try{
+    const s = localStorage.getItem('sf_state');
+    const t = localStorage.getItem('sf_timers');
+    if(s) state = JSON.parse(s);
+    const timerData = t ? JSON.parse(t) : {};
+    for(const sub of state.subjects){
+      const td = timerData[sub.id] || {};
+      timers[sub.id] = {elapsed: td.elapsed||0, running:false, interval:null, sessions:td.sessions||[]};
+    }
+  }catch(e){state={subjects:[],selected:null}}
+}
+
+/* ===== TIMER ===== */
+function currentElapsed(id){
+  const t = timers[id];
+  if(!t) return 0;
+  if(t.running && t._start) return t.elapsed + (Date.now()-t._start);
+  return t.elapsed;
+}
+
+function startTimer(id){
+  const t = timers[id];
+  if(!t || t.running) return;
+  t.running = true;
+  t._start = Date.now();
+  t.interval = setInterval(()=>updateTimerDisplay(id), 500);
+  save();
+  renderSidebar();
+  updateTimerDisplay(id);
+}
+
+function pauseTimer(id){
+  const t = timers[id];
+  if(!t || !t.running) return;
+  t.elapsed += Date.now() - t._start;
+  t.running = false;
+  t._start = null;
+  clearInterval(t.interval);
+  t.interval = null;
+  // record session
+  const sessionMs = currentElapsed(id) - (t.sessions.reduce((a,s)=>a+s,0));
+  if(sessionMs>0) t.sessions.push(sessionMs);
+  save();
+  renderSidebar();
+  updateTimerDisplay(id);
+}
+
+function resetTimer(id){
+  const t = timers[id];
+  if(!t) return;
+  if(t.interval) clearInterval(t.interval);
+  t.elapsed = 0;
+  t.running = false;
+  t._start = null;
+  t.interval = null;
+  t.sessions = [];
+  save();
+  renderSidebar();
+  updateTimerDisplay(id);
+}
+
+function fmtTime(ms){
+  const s = Math.floor(ms/1000);
+  const h = Math.floor(s/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  if(h>0) return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+  return `${pad(m)}:${pad(sec)}`;
+}
+
+function fmtHuman(ms){
+  const s = Math.floor(ms/1000);
+  const h = Math.floor(s/3600);
+  const m = Math.floor((s%3600)/60);
+  if(h>0 && m>0) return `${h}h ${m}m`;
+  if(h>0) return `${h}h`;
+  if(m>0) return `${m}m ${s%60}s`;
+  return `${s}s`;
+}
+
+function pad(n){return String(n).padStart(2,'0')}
+
+function updateTimerDisplay(id){
+  if(state.selected !== id) return;
+  const ms = currentElapsed(id);
+  const td = document.getElementById('timer-digits');
+  const tc = document.getElementById('timer-controls');
+  if(!td) return;
+  td.textContent = fmtTime(ms);
+  const t = timers[id];
+  td.className = 'timer-time' + (t&&t.running?' running':'');
+  // status
+  const ts = document.getElementById('timer-status');
+  if(ts){
+    if(t&&t.running) ts.innerHTML='<span class="running-pill">LIVE</span> Session in progress';
+    else if(ms>0) ts.innerHTML='Paused — ready to resume';
+    else ts.innerHTML='Press Start to begin';
+  }
+  // accumulated
+  const av = document.getElementById('acc-val');
+  if(av) av.textContent = ms>0 ? fmtHuman(ms) : '—';
+  // sessions
+  renderSessions(id);
+}
+
+function renderSessions(id){
+  const t = timers[id];
+  const cont = document.getElementById('sess-list');
+  if(!cont||!t) return;
+  if(!t.sessions||t.sessions.length===0){
+    cont.innerHTML='<div class="sess-empty">No sessions yet</div>';
+    return;
+  }
+  cont.innerHTML = t.sessions.map((s,i)=>`
+    <div class="sess-item">
+      <span class="sess-n">Session ${i+1}</span>
+      <span class="sess-t">${fmtHuman(s)}</span>
+    </div>`).join('');
+}
+
+/* ===== SUBJECTS ===== */
+function genId(){return '_'+Math.random().toString(36).slice(2,9)}
+
+function openModal(editId=null){
+  editingId = editId;
+  const isEdit = editId!==null;
+  document.getElementById('modal-title').textContent = isEdit ? 'Edit Subject' : 'Add Subject';
+  document.getElementById('modal-save-btn').textContent = isEdit ? 'Save Changes' : 'Add Subject';
+  if(isEdit){
+    const sub = state.subjects.find(s=>s.id===editId);
+    document.getElementById('m-name').value = sub.name;
+    selectedEmoji = sub.icon;
+    selectedColor = sub.color;
+  } else {
+    document.getElementById('m-name').value = '';
+    selectedEmoji = EMOJIS[0];
+    selectedColor = COLORS[0];
+  }
+  renderPickers();
+  document.getElementById('modal-overlay').style.display='flex';
+  setTimeout(()=>document.getElementById('m-name').focus(),50);
+}
+
+function renderPickers(){
+  document.getElementById('emoji-row').innerHTML = EMOJIS.map(e=>`
+    <div class="e-opt${e===selectedEmoji?' sel':''}" onclick="selEmoji('${e}')">${e}</div>`).join('');
+  document.getElementById('clr-row').innerHTML = COLORS.map(c=>`
+    <div class="clr-sw${c===selectedColor?' sel':''}" style="background:${c}" onclick="selColor('${c}')"></div>`).join('');
+}
+
+function selEmoji(e){selectedEmoji=e;renderPickers()}
+function selColor(c){selectedColor=c;renderPickers()}
+function closeModal(){document.getElementById('modal-overlay').style.display='none';editingId=null}
+function closeOverlay(ev){if(ev.target.id==='modal-overlay')closeModal()}
+
+function saveSubject(){
+  const name = document.getElementById('m-name').value.trim();
+  if(!name){document.getElementById('m-name').focus();shake(document.getElementById('m-name'));return}
+  if(editingId){
+    const sub = state.subjects.find(s=>s.id===editingId);
+    if(sub){sub.name=name;sub.icon=selectedEmoji;sub.color=selectedColor}
+    editingId=null;
+  } else {
+    const id = genId();
+    state.subjects.push({id, name, icon:selectedEmoji, color:selectedColor, topics:[]});
+    timers[id] = {elapsed:0, running:false, interval:null, sessions:[]};
+    state.selected = id;
+  }
+  closeModal();
+  save();
+  render();
+}
+
+function deleteSubject(id){
+  if(!confirm('Delete this subject and all its topics?')) return;
+  if(timers[id]&&timers[id].interval) clearInterval(timers[id].interval);
+  delete timers[id];
+  state.subjects = state.subjects.filter(s=>s.id!==id);
+  if(state.selected===id) state.selected = state.subjects[0]?.id||null;
+  save();
+  render();
+  toast('Subject deleted');
+}
+
+function moveSubject(id, dir){
+  const arr = state.subjects;
+  const i = arr.findIndex(s=>s.id===id);
+  const ni = i+dir;
+  if(ni<0||ni>=arr.length) return;
+  [arr[i],arr[ni]] = [arr[ni],arr[i]];
+  save();
+  renderSidebar();
+}
+
+function selectSubject(id){
+  state.selected=id;
+  save();
+  render();
+}
+
+/* ===== TOPICS ===== */
+function addTopic(subId){
+  const inp = document.getElementById('topic-inp');
+  const val = inp.value.trim();
+  if(!val){inp.focus();shake(inp);return}
+  const sub = state.subjects.find(s=>s.id===subId);
+  if(!sub) return;
+  sub.topics.push({id:genId(), name:val, done:false});
+  inp.value='';
+  inp.focus();
+  save();
+  renderDetail();
+  renderSidebar();
+  updateStats();
+}
+
+function toggleTopic(subId, topicId){
+  const sub = state.subjects.find(s=>s.id===subId);
+  if(!sub) return;
+  const t = sub.topics.find(t=>t.id===topicId);
+  if(t) t.done = !t.done;
+  save();
+  renderDetail();
+  renderSidebar();
+  updateStats();
+  if(t&&t.done) confetti(topicId);
+}
+
+function deleteTopic(subId, topicId){
+  const sub = state.subjects.find(s=>s.id===subId);
+  if(!sub) return;
+  sub.topics = sub.topics.filter(t=>t.id!==topicId);
+  save();
+  renderDetail();
+  renderSidebar();
+  updateStats();
+}
+
+/* ===== RENDER ===== */
+function render(){renderSidebar();renderMain();updateStats()}
+
+function renderSidebar(){
+  const list = document.getElementById('sb-list');
+  if(!state.subjects.length){
+    list.innerHTML='<div class="sb-empty">No subjects yet.<br>Add one to get started!</div>';
+    return;
+  }
+  list.innerHTML = state.subjects.map((sub,i)=>{
+    const done = sub.topics.filter(t=>t.done).length;
+    const total = sub.topics.length;
+    const pct = total>0 ? Math.round(done/total*100) : 0;
+    const t = timers[sub.id];
+    const ms = t ? currentElapsed(sub.id) : 0;
+    const isRunning = t&&t.running;
+    return `<div class="sub-item${state.selected===sub.id?' active':''}" onclick="selectSubject('${sub.id}')">
+      <div class="sub-dot" style="background:${sub.color}"></div>
+      <div class="sub-info">
+        <div class="sub-nm">${esc(sub.name)}</div>
+        <div class="sub-meta">
+          ${total>0?`<span>${done}/${total} topics</span>`:'<span>No topics</span>'}
+          ${isRunning?'<span class="running-pill">LIVE</span>':ms>0?`<span>⏱ ${fmtHuman(ms)}</span>`:''}
+        </div>
+      </div>
+      <div class="sub-actions">
+        ${i>0?`<button class="ico-btn" title="Move up" onclick="event.stopPropagation();moveSubject('${sub.id}',-1)">▲</button>`:'<span style="height:18px"></span>'}
+        ${i<state.subjects.length-1?`<button class="ico-btn" title="Move down" onclick="event.stopPropagation();moveSubject('${sub.id}',1)">▼</button>`:'<span style="height:18px"></span>'}
+      </div>
+      <button class="ico-btn del-btn" title="Delete" onclick="event.stopPropagation();deleteSubject('${sub.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderMain(){
+  const main = document.getElementById('main-area');
+  if(!state.selected){
+    main.innerHTML=`<div class="empty" id="empty-state">
+      <div class="empty-ico">🎯</div>
+      <div class="empty-title">Ready to study?</div>
+      <div class="empty-desc">Add your subjects from the sidebar, then track every topic and your study time.</div>
+    </div>`;
+    return;
+  }
+  const sub = state.subjects.find(s=>s.id===state.selected);
+  if(!sub){state.selected=null;renderMain();return}
+  const done = sub.topics.filter(t=>t.done).length;
+  const total = sub.topics.length;
+  const pct = total>0?Math.round(done/total*100):0;
+  const t = timers[sub.id];
+  const ms = t?currentElapsed(sub.id):0;
+  main.innerHTML=`
+    <div class="detail" id="subject-detail">
+      <div class="detail-head">
+        <div class="sub-icon-lg" style="background:${sub.color}22">${sub.icon}</div>
+        <div class="head-info">
+          <div class="head-name">${esc(sub.name)}</div>
+          <div class="head-sub">${total} topics · ${done} completed</div>
+          <div class="head-btns">
+            <button class="head-btn" onclick="openModal('${sub.id}')">✏️ Edit</button>
+          </div>
+        </div>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-row">
+          <span class="prog-label">Progress</span>
+          <span class="prog-pct">${pct}%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="grid">
+        <!-- TOPICS -->
+        <div>
+          <div class="card">
+            <div class="c-title">📋 Topics Checklist</div>
+            <div class="add-topic-row">
+              <input class="topic-input" id="topic-inp" placeholder="Add a topic…" maxlength="80"
+                onkeydown="if(event.key==='Enter')addTopic('${sub.id}')">
+              <button class="topic-add-btn" onclick="addTopic('${sub.id}')">Add</button>
+            </div>
+            <div class="topic-list" id="topic-list">
+              ${renderTopics(sub)}
+            </div>
+            ${total>0?`<div class="topics-summary">
+              <div class="ts-pill green">✓ ${done} done</div>
+              <div class="ts-pill blue">◌ ${total-done} remaining</div>
+              ${pct===100?'<div class="ts-pill green">🎉 All done!</div>':''}
+            </div>`:''}
+          </div>
+        </div>
+        <!-- TIMER -->
+        <div>
+          <div class="card">
+            <div class="c-title">⏱ Study Timer</div>
+            <div class="timer-face">
+              <div class="timer-time${t&&t.running?' running':''}" id="timer-digits">${fmtTime(ms)}</div>
+              <div class="timer-status" id="timer-status">
+                ${t&&t.running?'<span class="running-pill">LIVE</span> Session in progress':ms>0?'Paused — ready to resume':'Press Start to begin'}
+              </div>
+            </div>
+            <div class="timer-controls" id="timer-controls">
+              ${t&&t.running
+                ?`<button class="t-btn t-pause" onclick="pauseTimer('${sub.id}')">⏸ Pause</button>`
+                :`<button class="t-btn t-start" onclick="startTimer('${sub.id}')">▶ Start</button>`}
+              <button class="t-btn t-reset" onclick="resetTimer('${sub.id}')" title="Reset">↺</button>
+            </div>
+            <div class="timer-accumulated">
+              <span class="acc-label">Total study time</span>
+              <span class="acc-val" id="acc-val">${ms>0?fmtHuman(ms):'—'}</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="c-title">📅 Sessions</div>
+            <div id="sess-list">
+              ${t&&t.sessions&&t.sessions.length
+                ?t.sessions.map((s,i)=>`<div class="sess-item"><span class="sess-n">Session ${i+1}</span><span class="sess-t">${fmtHuman(s)}</span></div>`).join('')
+                :'<div class="sess-empty">No sessions recorded yet</div>'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  // if timer running, restart display interval
+  if(t&&t.running){
+    clearInterval(t.interval);
+    t.interval = setInterval(()=>{
+      updateTimerDisplay(sub.id);
+      // also update controls if state changes
+    },500);
+  }
+}
+
+function renderTopics(sub){
+  if(!sub.topics.length) return `
+    <div class="topics-empty">
+      <div class="topics-empty-ico">📝</div>
+      Add your first topic above.<br>Each topic is a concept or chapter to study.
+    </div>`;
+  return sub.topics.map(t=>`
+    <div class="t-item${t.done?' done':''}" id="ti-${t.id}">
+      <div class="t-check${t.done?' on':''}" onclick="toggleTopic('${sub.id}','${t.id}')">${t.done?'✓':''}</div>
+      <div class="t-name">${esc(t.name)}</div>
+      <button class="t-del" onclick="deleteTopic('${sub.id}','${t.id}')" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function renderDetail(){
+  const sub = state.subjects.find(s=>s.id===state.selected);
+  if(!sub) return;
+  const done = sub.topics.filter(t=>t.done).length;
+  const total = sub.topics.length;
+  const pct = total>0?Math.round(done/total*100):0;
+  // Update progress
+  const pf = document.querySelector('.prog-fill');
+  if(pf) pf.style.width=pct+'%';
+  const pp = document.querySelector('.prog-pct');
+  if(pp) pp.textContent=pct+'%';
+  const hs = document.querySelector('.head-sub');
+  if(hs) hs.textContent=`${total} topics · ${done} completed`;
+  // Update topics
+  const tl = document.getElementById('topic-list');
+  if(tl) tl.innerHTML = renderTopics(sub);
+  // Update summary
+  let sm = document.querySelector('.topics-summary');
+  if(total>0){
+    const html=`<div class="ts-pill green">✓ ${done} done</div>
+      <div class="ts-pill blue">◌ ${total-done} remaining</div>
+      ${pct===100?'<div class="ts-pill green">🎉 All done!</div>':''}`;
+    if(sm) sm.innerHTML=html;
+    else {
+      const nc = document.createElement('div');
+      nc.className='topics-summary';
+      nc.innerHTML=html;
+      document.querySelector('.card').appendChild(nc);
+    }
+  }
+}
+
+function updateStats(){
+  const subs = state.subjects;
+  let totalTopics=0, doneTopics=0;
+  subs.forEach(s=>{totalTopics+=s.topics.length;doneTopics+=s.topics.filter(t=>t.done).length});
+  document.getElementById('s-subjects').textContent=subs.length;
+  document.getElementById('s-topics').textContent=totalTopics;
+  document.getElementById('s-pct').textContent=totalTopics>0?Math.round(doneTopics/totalTopics*100)+'%':'0%';
+}
+
+/* ===== UTILS ===== */
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function shake(el){
+  el.style.animation='none';
+  el.offsetHeight;
+  el.style.animation='shake .3s ease';
+  el.addEventListener('animationend',()=>el.style.animation='',{once:true});
+}
+
+function toast(msg, ico='✓'){
+  const el = document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<span>${ico}</span> ${msg}`;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300)},2500);
+}
+
+function confetti(id){
+  // simple emoji burst
+  const box = document.getElementById('ti-'+id);
+  if(!box) return;
+  const rect = box.getBoundingClientRect();
+  const burst = ['🎉','⭐','✨','🎊'];
+  burst.forEach((e,i)=>{
+    const sp = document.createElement('span');
+    sp.textContent=e;
+    sp.style.cssText=`position:fixed;left:${rect.left+rect.width/2}px;top:${rect.top}px;font-size:18px;pointer-events:none;z-index:999;animation:floatUp .8s ease forwards;transform-origin:center`;
+    sp.style.setProperty('--dx',(Math.random()*80-40)+'px');
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),900);
+  });
+}
+
+/* ===== INIT ===== */
+const style = document.createElement('style');
+style.textContent=`
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes floatUp{from{opacity:1;transform:translate(0,0)}to{opacity:0;transform:translate(var(--dx,0),-60px)}}
+`;
+document.head.appendChild(style);
+
+load();
+render();
+updateStats();
+
+// Keyboard shortcut: N = new subject
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeModal();
+  if(e.key==='n'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)&&document.getElementById('modal-overlay').style.display==='none'){
+    openModal();
+  }
+});
+</script>
+</body>
+</html>
